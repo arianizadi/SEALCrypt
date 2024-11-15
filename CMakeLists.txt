@@ -32,6 +32,7 @@ endif()
 set(SEALCRYPT_LIB_SOURCES
     src/encrypt.cpp
     src/decrypt.cpp
+    src/verify.cpp
     src/file_handler.cpp
 )
 
@@ -39,6 +40,7 @@ set(SEALCRYPT_LIB_SOURCES
 set(SEALCRYPT_HEADERS
     include/sealcrypt/encrypt.hpp
     include/sealcrypt/decrypt.hpp
+    include/sealcrypt/verify.hpp
     include/sealcrypt/file_handler.hpp
 )
 

@@ -15,6 +15,7 @@ endfunction()
 # Add individual test executables
 add_sealcrypt_test(test_decryptor)
 add_sealcrypt_test(test_encryptor)
+add_sealcrypt_test(test_verify)
 add_sealcrypt_test(test_file_handler)
 
 # Optional: Add a target to run all tests
