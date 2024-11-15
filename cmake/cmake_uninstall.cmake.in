@@ -5,6 +5,7 @@ endif()
 file(READ "@CMAKE_BINARY_DIR@/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 
+# Remove individual files
 foreach(file ${files})
     message(STATUS "Uninstalling $ENV{DESTDIR}${file}")
     if(IS_SYMLINK "$ENV{DESTDIR}${file}" OR EXISTS "$ENV{DESTDIR}${file}")
@@ -21,13 +22,22 @@ foreach(file ${files})
     endif()
 endforeach()
 
-# Remove empty directories
-foreach(file ${files})
-    get_filename_component(dir "${file}" DIRECTORY)
-    if(EXISTS "${dir}")
+# Only remove specific directories related to sealcrypt
+set(SEALCRYPT_DIRS
+    "/usr/local/include/sealcrypt"
+    "/usr/local/lib/cmake/sealcrypt"
+)
+
+foreach(dir ${SEALCRYPT_DIRS})
+    if(EXISTS "$ENV{DESTDIR}${dir}")
+        message(STATUS "Removing directory: $ENV{DESTDIR}${dir}")
         execute_process(
-            COMMAND "@CMAKE_COMMAND@" -E remove_directory "${dir}"
-            OUTPUT_QUIET ERROR_QUIET
+            COMMAND "@CMAKE_COMMAND@" -E remove_directory "$ENV{DESTDIR}${dir}"
+            OUTPUT_VARIABLE rm_out
+            RESULT_VARIABLE rm_retval
         )
+        if(NOT "${rm_retval}" STREQUAL 0)
+            message(STATUS "Directory $ENV{DESTDIR}${dir} could not be removed")
+        endif()
     endif()
 endforeach()
