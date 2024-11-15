@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-using namespace sealcrypt;
+using sealcrypt::FileHandler;
 
 auto test_write_and_read_file() -> bool {
   const std::string test_file = "test_data.bin";

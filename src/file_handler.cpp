@@ -46,7 +46,8 @@ namespace sealcrypt {
         return false;
       }
 
-      file.write(reinterpret_cast< const char* >(data.data()), data.size());
+      file.write(reinterpret_cast< const char* >(data.data()),
+                 static_cast< std::streamsize >(data.size()));
 
       if(!file) {
         error = "Error writing to file: " + path;
@@ -102,7 +103,7 @@ namespace sealcrypt {
       }
 
       file.write(reinterpret_cast< const char* >(key_data.data()),
-                 key_data.size());
+                 static_cast< std::streamsize >(key_data.size()));
 
       if(!file) {
         error = "Error writing to key file: " + path;
