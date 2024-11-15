@@ -13,20 +13,20 @@ namespace sealcrypt {
     ~Encryptor();
 
     // Initialize encryption parameters
-    bool init(std::size_t poly_modulus_degree = 8192,
-              std::uint64_t plain_modulus = 1024);
+    auto init(std::size_t poly_modulus_degree = 8192,
+              std::uint64_t plain_modulus = 1024) -> bool;
 
     // Encrypt a file using provided public key
-    bool encryptFile(const std::string& input_path,
+    auto encryptFile(const std::string& input_path,
                      const std::string& output_path,
-                     const std::string& public_key_path);
+                     const std::string& public_key_path) -> bool;
 
     // Generate new key pair
-    bool generateKeys(const std::string& public_key_path,
-                      const std::string& private_key_path);
+    auto generateKeys(const std::string& public_key_path,
+                      const std::string& private_key_path) -> bool;
 
     // Get last error message
-    std::string getLastError() const;
+    [[nodiscard]] auto getLastError() const -> std::string;
 
   private:
     std::unique_ptr< seal::SEALContext > context_;
@@ -34,9 +34,9 @@ namespace sealcrypt {
     std::unique_ptr< seal::Encryptor > encryptor_;
     std::string last_error_;
 
-    bool initializeContext(std::size_t poly_modulus_degree,
-                           std::uint64_t plain_modulus);
-    std::vector< seal::Plaintext >
-    preparePlaintexts(const std::vector< std::uint8_t >& data);
+    auto initializeContext(std::size_t poly_modulus_degree,
+                           std::uint64_t plain_modulus) -> bool;
+    auto preparePlaintexts(const std::vector< std::uint8_t >& data)
+        -> std::vector< seal::Plaintext >;
   };
 } // namespace sealcrypt

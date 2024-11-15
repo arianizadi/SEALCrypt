@@ -13,25 +13,25 @@ namespace sealcrypt {
     ~Decryptor();
 
     // Initialize decryption with parameters
-    bool init(std::size_t poly_modulus_degree = 8192,
-              std::uint64_t plain_modulus = 1024);
+    auto init(std::size_t poly_modulus_degree = 8192,
+              std::uint64_t plain_modulus = 1024) -> bool;
 
     // Decrypt a file using provided private key
-    bool decryptFile(const std::string &input_path,
+    auto decryptFile(const std::string &input_path,
                      const std::string &output_path,
-                     const std::string &private_key_path);
+                     const std::string &private_key_path) -> bool;
 
     // Get last error message
-    std::string getLastError() const;
+    [[nodiscard]] auto getLastError() const -> std::string;
 
   private:
     std::unique_ptr< seal::SEALContext > context_;
     std::unique_ptr< seal::Decryptor > decryptor_;
     std::string last_error_;
 
-    bool initializeContext(std::size_t poly_modulus_degree,
-                           std::uint64_t plain_modulus);
-    std::vector< std::uint8_t >
-    processDecrypted(const std::vector< seal::Plaintext > &plaintexts);
+    auto initializeContext(std::size_t poly_modulus_degree,
+                           std::uint64_t plain_modulus) -> bool;
+    auto processDecrypted(const std::vector< seal::Plaintext > &plaintexts)
+        -> std::vector< std::uint8_t >;
   };
 } // namespace sealcrypt

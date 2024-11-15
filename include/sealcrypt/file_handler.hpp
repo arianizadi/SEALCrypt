@@ -8,36 +8,34 @@ namespace sealcrypt {
 
   class FileHandler {
   public:
-    // Read entire file into memory
-    static bool readFile(const std::string& path,
-                         std::vector< std::uint8_t >& data,
-                         std::string& error);
-
-    // Write data to file
-    static bool writeFile(const std::string& path,
-                          const std::vector< std::uint8_t >& data,
-                          std::string& error);
-
-    // Read SEAL key from file
-    static bool readKeyFile(const std::string& path,
-                            std::vector< std::uint8_t >& key_data,
-                            std::string& error);
-
-    // Write SEAL key to file
-    static bool writeKeyFile(const std::string& path,
-                             const std::vector< std::uint8_t >& key_data,
-                             std::string& error);
-
-    // Get file size
-    static std::size_t getFileSize(const std::string& path);
-
-    // Check if file exists
-    static bool fileExists(const std::string& path);
-
-  private:
-    // Utility class - no instantiation
     FileHandler() = delete;
     ~FileHandler() = delete;
+
+    // Read entire file into memory
+    static auto readFile(const std::string& path,
+                         std::vector< std::uint8_t >& data,
+                         std::string& error) -> bool;
+
+    // Write data to file
+    static auto writeFile(const std::string& path,
+                          const std::vector< std::uint8_t >& data,
+                          std::string& error) -> bool;
+
+    // Read SEAL key from file
+    static auto readKeyFile(const std::string& path,
+                            std::vector< std::uint8_t >& key_data,
+                            std::string& error) -> bool;
+
+    // Write SEAL key to file
+    static auto writeKeyFile(const std::string& path,
+                             const std::vector< std::uint8_t >& key_data,
+                             std::string& error) -> bool;
+
+    // Get file size
+    static auto getFileSize(const std::string& path) -> std::size_t;
+
+    // Check if file exists
+    static auto fileExists(const std::string& path) -> bool;
   };
 
 } // namespace sealcrypt
