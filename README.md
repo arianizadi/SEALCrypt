@@ -23,7 +23,7 @@ SEALCrypt is a C++ library that provides homomorphic encryption capabilities usi
 ### Building from Source
 
 ```bash
-git clone https://github.com/yourusername/SEALCrypt.git
+git clone https://github.com/arianizadi/SEALCrypt.git
 cd SEALCrypt
 mkdir build && cd build
 cmake ..
