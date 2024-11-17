@@ -88,6 +88,28 @@ make run_all_tests
 ./tests/test_file_handler
 ```
 
+## 📚 Example CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.10)
+
+# Set the project name
+project(TestProject)
+
+# Specify the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Find the SEAL library
+find_package(SEALCrypt REQUIRED)
+
+# Add the executable
+add_executable(main main.cpp)
+
+# Link the SEAL library
+target_link_libraries(main PRIVATE sealcrypt::sealcrypt)
+```
+
 ### Key Components
 
 - **Encryptor**: Handles encryption operations using SEAL's homomorphic encryption
