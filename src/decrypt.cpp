@@ -1,8 +1,6 @@
 #include "sealcrypt/decrypt.hpp"
 
 #include <fstream>
-#include <iterator>
-#include <stdexcept>
 
 namespace sealcrypt {
 

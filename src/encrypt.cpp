@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <iterator>
-#include <stdexcept>
 
 namespace sealcrypt {
 
