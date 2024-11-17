@@ -54,7 +54,6 @@ target_link_libraries(your_target PRIVATE sealcrypt::sealcrypt)
 ```cpp
 #include <sealcrypt/encrypt.hpp>
 #include <sealcrypt/decrypt.hpp>
-#include <sealcrypt/verify.hpp>
 #include <sealcrypt/file_handler.hpp>
 
 int main() {
@@ -71,9 +70,6 @@ sealcrypt encrypt --input input.txt --output output.encrypted --public-key publi
 
 # Decrypt a file
 sealcrypt decrypt --input output.encrypted --output decrypted.txt --private-key private.key
-
-# Verify a file
-sealcrypt verify --input input.txt --output decrypted.txt
 ```
 
 ## 🧪 Testing
@@ -89,7 +85,6 @@ make run_all_tests
 # Run specific test
 ./tests/test_encryptor
 ./tests/test_decryptor
-./tests/test_verify
 ./tests/test_file_handler
 ```
 
@@ -97,5 +92,4 @@ make run_all_tests
 
 - **Encryptor**: Handles encryption operations using SEAL's homomorphic encryption
 - **Decryptor**: Manages decryption of homomorphically encrypted data
-- **Verifier**: Provides file verification capabilities
 - **FileHandler**: Provides thread-safe file operations for encrypted data
