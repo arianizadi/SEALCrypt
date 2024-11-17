@@ -100,13 +100,13 @@ project(TestProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Find the SEAL library
+# Find the SEALCrypt library
 find_package(SEALCrypt REQUIRED)
 
 # Add the executable
 add_executable(main main.cpp)
 
-# Link the SEAL library
+# Link the SEALCrypt library
 target_link_libraries(main PRIVATE sealcrypt::sealcrypt)
 ```
 
