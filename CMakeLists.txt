@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(SEALCRYPT VERSION 1.0.0 LANGUAGES CXX)
 
+# Enable testing
+include(CTest)
+enable_testing()
+
 # Set C++ standard (SEAL requires C++17 or higher)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,7 +30,6 @@ if(SEAL_USE_ZLIB)
 else()
     message(STATUS "SEAL ZLIB support: NO")
 endif()
-
 
 # Define source files for the library
 set(SEALCRYPT_LIB_SOURCES
@@ -64,7 +67,9 @@ target_link_libraries(sealcrypt
 # Create executable if this is the main project
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     add_subdirectory(src)
-    add_subdirectory(tests)
+    if(BUILD_TESTING)
+        add_subdirectory(tests)
+    endif()
 endif()
 
 # Installation rules
@@ -73,7 +78,7 @@ install(TARGETS sealcrypt
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION)
+    )
 
 install(FILES ${SEALCRYPT_HEADERS}
     DESTINATION include/sealcrypt

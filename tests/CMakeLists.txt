@@ -1,24 +1,31 @@
-enable_testing()
+# Find GTest package
+find_package(GTest REQUIRED)
 
-# Function to create test executable
-function(add_sealcrypt_test TEST_NAME)
-    add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
-    target_link_libraries(${TEST_NAME} PRIVATE sealcrypt)
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
-    set_tests_properties(${TEST_NAME}
-        PROPERTIES
-        FAIL_REGULAR_EXPRESSION ".*failed.*"
-        PASS_REGULAR_EXPRESSION ".*passed.*"
-    )
-endfunction()
-
-# Add individual test executables
-add_sealcrypt_test(test_decryptor)
-add_sealcrypt_test(test_encryptor)
-add_sealcrypt_test(test_file_handler)
-
-# Optional: Add a target to run all tests
-add_custom_target(run_all_tests
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-    DEPENDS test_decryptor test_encryptor test_file_handler
+# Create test executables
+set(TEST_SOURCES
+    test_encryptor.cpp
+    test_decryptor.cpp
+    test_file_handler.cpp
 )
+
+foreach(test_source ${TEST_SOURCES})
+    # Get the filename without extension
+    get_filename_component(test_name ${test_source} NAME_WE)
+    # Create test executable
+    add_executable(${test_name} ${test_source})
+    # Link against GTest and your library
+    target_link_libraries(${test_name}
+        PRIVATE
+        sealcrypt::sealcrypt
+        GTest::GTest
+        GTest::Main
+    )
+    # Add test to CTest
+    add_test(NAME ${test_name} COMMAND ${test_name})
+    # Set test properties (optional)
+    set_tests_properties(${test_name}
+        PROPERTIES
+        TIMEOUT 30  # Timeout in seconds
+        WILL_FAIL FALSE
+    )
+endforeach()
