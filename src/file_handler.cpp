@@ -92,9 +92,6 @@ namespace sealcrypt {
       return false;
     }
 
-    // Add any additional key data validation here
-
-    // Use restricted permissions for key file
     try {
       std::ofstream file(path, std::ios::binary);
       if(!file.is_open()) {
@@ -109,9 +106,6 @@ namespace sealcrypt {
         error = "Error writing to key file: " + path;
         return false;
       }
-
-      // On Unix-like systems, you might want to set file permissions here
-      // using chmod or similar functionality
 
       return true;
     } catch(const std::exception& e) {
