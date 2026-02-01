@@ -1,24 +1,15 @@
-# SEALCrypt 🔐
+# SEALCrypt
 
 SEALCrypt is a C++ library that provides homomorphic encryption capabilities using Microsoft SEAL. It offers a simplified interface for common encryption operations while leveraging the power of SEAL's homomorphic encryption features.
 
-## 🌟 Features
-
-- File encryption/decryption using homomorphic encryption
-- Streamlined SEAL integration
-- Thread-safe file handling
-- Comprehensive test suite
-- CMake-based build system
-- Can be used as both a standalone executable and a library
-
-## 📋 Prerequisites
+## Prerequisites
 
 - CMake (>= 3.12)
 - C++17 compatible compiler
 - Microsoft SEAL (>= 4.1)
 - Git (for installation)
 
-## 🚀 Installation
+## Installation
 
 ### Building from Source
 
@@ -38,7 +29,7 @@ sudo make install
 sudo make uninstall
 ```
 
-## 💻 Usage
+## Usage
 
 ### As a Library
 
@@ -62,19 +53,26 @@ int main() {
 }
 ```
 
-### As an Executable
+### Example Usage
 
 ```bash
-# Encrypt a file
-sealcrypt encrypt --input input.txt --output output.encrypted --public-key public.key
+# 1. Create a test file
+echo 'HELLOOOOOOO!' > secret.txt
 
-# Decrypt a file
-sealcrypt decrypt --input output.encrypted --output decrypted.txt --private-key private.key
+# 2. Generate keys
+./sealcrypt generate-keys --public-key public.key --private-key private.key
+
+# 3. Encrypt the file
+./sealcrypt encrypt --input secret.txt --output secret.encrypted --public-key public.key
+
+# 4. Decrypt the file
+./sealcrypt decrypt --input secret.encrypted --output secret_decrypted.txt --private-key private.key
+
+# 5. Verify
+cat secret_decrypted.txt
 ```
 
-## 🧪 Testing
-
-SEALCrypt comes with a comprehensive test suite. Each component has its own test file that can be run independently.
+## Testing
 
 ```bash
 # Build and run all tests
@@ -88,7 +86,7 @@ make run_all_tests
 ./tests/test_file_handler
 ```
 
-## 📚 Example CMakeLists.txt
+## Example CMakeLists.txt
 
 ```cmake
 cmake_minimum_required(VERSION 3.10)
