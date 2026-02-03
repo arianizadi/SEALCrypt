@@ -1,30 +1,17 @@
 // Test: HomomorphicInt::isTransparent()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::isTransparent()" << std::endl;
+using namespace sealcrypt::test;
 
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
-
-  auto enc = sealcrypt::HomomorphicInt::encrypt(42, ctx, keys);
+TEST_F(CryptoTestFixture, IsTransparent) {
+  auto enc = sealcrypt::HomomorphicInt::encrypt(42, *ctx, *keys);
 
   // Properly encrypted ciphertext should NOT be transparent
   // (transparent = can be decrypted without secret key = security risk)
-  if(enc.isTransparent()) {
-    std::cerr << "FAIL: encrypted ciphertext should not be transparent"
-              << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS" << std::endl;
-  return 0;
+  EXPECT_FALSE(enc.isTransparent())
+      << "Encrypted ciphertext should not be transparent";
 }

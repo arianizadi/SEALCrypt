@@ -1,24 +1,15 @@
 // Test: HomomorphicInt::power()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::power()" << std::endl;
+using namespace sealcrypt::test;
 
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
-  if(!keys.generateRelinKeys()) {
-    std::cerr << "FAIL: keys.generateRelinKeys() failed" << std::endl;
-    return 1;
-  }
+TEST_F(CryptoTestFixture, Power) {
+  ASSERT_TRUE(keys->generateRelinKeys());
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -28,21 +19,12 @@ auto main() -> int {
   std::uint64_t exponent = 3;
   std::int64_t expected = base * base * base;
 
-  auto enc = sealcrypt::HomomorphicInt::encrypt(base, ctx, keys);
-  auto enc_pow = enc.power(exponent, ctx, keys);
+  auto enc = sealcrypt::HomomorphicInt::encrypt(base, *ctx, *keys);
+  auto enc_pow = enc.power(exponent, *ctx, *keys);
 
-  if(!enc_pow.isValid()) {
-    std::cerr << "FAIL: power() returned invalid result" << std::endl;
-    return 1;
-  }
+  ASSERT_TRUE(enc_pow.isValid());
 
-  std::int64_t result = enc_pow.decrypt(ctx, keys);
-  if(result != expected) {
-    std::cerr << "FAIL: " << base << "^" << exponent << " = " << result
-              << ", expected " << expected << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS" << std::endl;
-  return 0;
+  std::int64_t result = enc_pow.decrypt(*ctx, *keys);
+  EXPECT_EQ(result, expected) << base << "^" << exponent << " = " << result
+                              << ", expected " << expected;
 }

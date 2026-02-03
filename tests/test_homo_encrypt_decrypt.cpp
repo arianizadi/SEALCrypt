@@ -1,22 +1,14 @@
 // Test: HomomorphicInt::encrypt() and decrypt()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::encrypt() and decrypt()" << std::endl;
+using namespace sealcrypt::test;
 
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
-
-  // Test with random values
+TEST_F(CryptoTestFixture, EncryptDecrypt) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution< std::int64_t > dist(0, 10000);
@@ -24,22 +16,29 @@ auto main() -> int {
   for(int i = 0; i < 5; i++) {
     std::int64_t value = dist(gen);
 
-    auto encrypted = sealcrypt::HomomorphicInt::encrypt(value, ctx, keys);
-    if(!encrypted.isValid()) {
-      std::cerr << "FAIL: encrypt() returned invalid result for " << value
-                << std::endl;
-      std::cerr << "Error: " << encrypted.getLastError() << std::endl;
-      return 1;
-    }
+    auto encrypted = sealcrypt::HomomorphicInt::encrypt(value, *ctx, *keys);
+    ASSERT_TRUE(encrypted.isValid())
+        << "Failed to encrypt " << value << ": " << encrypted.getLastError();
 
-    std::int64_t decrypted = encrypted.decrypt(ctx, keys);
-    if(decrypted != value) {
-      std::cerr << "FAIL: decrypt() returned " << decrypted << ", expected "
-                << value << std::endl;
-      return 1;
-    }
+    std::int64_t decrypted = encrypted.decrypt(*ctx, *keys);
+    EXPECT_EQ(decrypted, value)
+        << "Expected " << value << ", got " << decrypted;
   }
+}
 
-  std::cout << "PASS" << std::endl;
-  return 0;
+TEST(HomomorphicIntTest, EncryptInvalidContext) {
+  sealcrypt::CryptoContext ctx(0, 0); // Invalid
+  sealcrypt::KeyPair keys(ctx);
+
+  auto encrypted = sealcrypt::HomomorphicInt::encrypt(42, ctx, keys);
+  EXPECT_FALSE(encrypted.isValid());
+}
+
+TEST(HomomorphicIntTest, EncryptNoPublicKey) {
+  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
+  sealcrypt::KeyPair keys(ctx);
+  // Don't generate keys
+
+  auto encrypted = sealcrypt::HomomorphicInt::encrypt(42, ctx, keys);
+  EXPECT_FALSE(encrypted.isValid());
 }

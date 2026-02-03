@@ -2,41 +2,29 @@
 
 #include "sealcrypt/sealcrypt.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: KeyPair::generate()" << std::endl;
-
+TEST(KeyPairTest, Generate) {
   sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
   sealcrypt::KeyPair keys(ctx);
 
   // Before generate - should not have keys
-  if(keys.hasPublicKey()) {
-    std::cerr << "FAIL: hasPublicKey() true before generate()" << std::endl;
-    return 1;
-  }
-  if(keys.hasSecretKey()) {
-    std::cerr << "FAIL: hasSecretKey() true before generate()" << std::endl;
-    return 1;
-  }
+  EXPECT_FALSE(keys.hasPublicKey());
+  EXPECT_FALSE(keys.hasSecretKey());
 
   // Generate keys
-  if(!keys.generate()) {
-    std::cerr << "FAIL: generate() returned false" << std::endl;
-    std::cerr << "Error: " << keys.getLastError() << std::endl;
-    return 1;
-  }
+  EXPECT_TRUE(keys.generate()) << "Error: " << keys.getLastError();
 
   // After generate - should have keys
-  if(!keys.hasPublicKey()) {
-    std::cerr << "FAIL: hasPublicKey() false after generate()" << std::endl;
-    return 1;
-  }
-  if(!keys.hasSecretKey()) {
-    std::cerr << "FAIL: hasSecretKey() false after generate()" << std::endl;
-    return 1;
-  }
+  EXPECT_TRUE(keys.hasPublicKey());
+  EXPECT_TRUE(keys.hasSecretKey());
+}
 
-  std::cout << "PASS" << std::endl;
-  return 0;
+TEST(KeyPairTest, GenerateInvalidContext) {
+  sealcrypt::CryptoContext ctx(0, 0); // Invalid
+  sealcrypt::KeyPair keys(ctx);
+
+  EXPECT_FALSE(keys.generate());
+  EXPECT_FALSE(keys.hasPublicKey());
+  EXPECT_FALSE(keys.hasSecretKey());
 }

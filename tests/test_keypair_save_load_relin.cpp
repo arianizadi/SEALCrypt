@@ -3,12 +3,9 @@
 #include "sealcrypt/sealcrypt.hpp"
 
 #include <cstdio>
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: KeyPair::saveRelinKeys() and loadRelinKeys()"
-            << std::endl;
-
+TEST(KeyPairTest, SaveLoadRelinKeys) {
   const char* relin_path = "test_relin.key";
 
   sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
@@ -16,42 +13,19 @@ auto main() -> int {
   // Generate and save
   {
     sealcrypt::KeyPair keys(ctx);
-    if(!keys.generate()) {
-      std::cerr << "FAIL: generate() failed" << std::endl;
-      return 1;
-    }
-    if(!keys.generateRelinKeys()) {
-      std::cerr << "FAIL: generateRelinKeys() failed" << std::endl;
-      return 1;
-    }
-
-    if(!keys.saveRelinKeys(relin_path)) {
-      std::cerr << "FAIL: saveRelinKeys() returned false" << std::endl;
-      std::cerr << "Error: " << keys.getLastError() << std::endl;
-      return 1;
-    }
+    ASSERT_TRUE(keys.generate());
+    ASSERT_TRUE(keys.generateRelinKeys());
+    EXPECT_TRUE(keys.saveRelinKeys(relin_path))
+        << "Error: " << keys.getLastError();
   }
 
   // Load into new KeyPair
   {
     sealcrypt::KeyPair keys(ctx);
-
-    if(!keys.loadRelinKeys(relin_path)) {
-      std::cerr << "FAIL: loadRelinKeys() returned false" << std::endl;
-      std::cerr << "Error: " << keys.getLastError() << std::endl;
-      remove(relin_path);
-      return 1;
-    }
-
-    if(!keys.hasRelinKeys()) {
-      std::cerr << "FAIL: hasRelinKeys() false after loadRelinKeys()"
-                << std::endl;
-      remove(relin_path);
-      return 1;
-    }
+    EXPECT_TRUE(keys.loadRelinKeys(relin_path))
+        << "Error: " << keys.getLastError();
+    EXPECT_TRUE(keys.hasRelinKeys());
   }
 
   remove(relin_path);
-  std::cout << "PASS" << std::endl;
-  return 0;
 }

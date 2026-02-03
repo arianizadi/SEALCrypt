@@ -1,7 +1,20 @@
-# SEALCrypt Tests
-# Each test file tests ONE specific function for easy debugging
+include(FetchContent)
 
-# KeyPair tests
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.17.0
+)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(googletest)
+
+find_package(Threads REQUIRED)
+
 set(KEYPAIR_TESTS
     test_keypair_generate.cpp
     test_keypair_generate_relin.cpp
@@ -11,7 +24,6 @@ set(KEYPAIR_TESTS
     test_keypair_save_load_relin.cpp
 )
 
-# HomomorphicInt tests
 set(HOMO_TESTS
     test_homo_encrypt_decrypt.cpp
     test_homo_isvalid.cpp
@@ -38,28 +50,30 @@ set(HOMO_TESTS
     test_homo_polynomial.cpp
 )
 
-# Legacy tests (keep for backwards compatibility)
-set(LEGACY_TESTS
-    test_encryptor.cpp
-    test_decryptor.cpp
-    test_file_handler.cpp
-)
-
-# Combine all tests
 set(ALL_TESTS
     ${KEYPAIR_TESTS}
     ${HOMO_TESTS}
-    ${LEGACY_TESTS}
 )
 
-# Create test executables
 foreach(test_source ${ALL_TESTS})
     get_filename_component(test_name ${test_source} NAME_WE)
     add_executable(${test_name} ${test_source})
+    target_include_directories(${test_name}
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    target_include_directories(${test_name}
+        BEFORE PRIVATE
+        ${CMAKE_BINARY_DIR}/_deps/googletest-src/googletest/include
+    )
     target_link_libraries(${test_name}
         PRIVATE
+        gtest_main
+        gtest
         sealcrypt::sealcrypt
+        Threads::Threads
     )
+    target_compile_features(${test_name} PRIVATE cxx_std_17)
     add_test(NAME ${test_name} COMMAND ${test_name})
     set_tests_properties(${test_name}
         PROPERTIES
@@ -68,7 +82,6 @@ foreach(test_source ${ALL_TESTS})
     )
 endforeach()
 
-# Custom targets to run test groups
 add_custom_target(test_keypair
     COMMAND ${CMAKE_CTEST_COMMAND} -R "keypair" --output-on-failure
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

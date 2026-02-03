@@ -1,21 +1,20 @@
 // Test: HomomorphicInt::modSwitchToNext()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::modSwitchToNext()" << std::endl;
+using namespace sealcrypt::test;
 
+TEST(HomomorphicIntTest, ModSwitchToNext) {
   // Need higher security level for mod switching
   sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Medium);
-  sealcrypt::KeyPair keys(ctx);
+  ASSERT_TRUE(ctx.isValid());
 
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
+  sealcrypt::KeyPair keys(ctx);
+  ASSERT_TRUE(keys.generate());
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -26,19 +25,10 @@ auto main() -> int {
   auto enc = sealcrypt::HomomorphicInt::encrypt(value, ctx, keys);
   auto enc_switched = enc.modSwitchToNext(ctx);
 
-  if(!enc_switched.isValid()) {
-    std::cerr << "FAIL: modSwitchToNext() returned invalid result" << std::endl;
-    return 1;
-  }
+  ASSERT_TRUE(enc_switched.isValid());
 
   // Value should remain the same
   std::int64_t result = enc_switched.decrypt(ctx, keys);
-  if(result != value) {
-    std::cerr << "FAIL: value changed after modSwitchToNext: " << result
-              << ", expected " << value << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS" << std::endl;
-  return 0;
+  EXPECT_EQ(result, value) << "Value changed after modSwitchToNext: " << result
+                           << ", expected " << value;
 }

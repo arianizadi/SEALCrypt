@@ -1,21 +1,14 @@
 // Test: HomomorphicInt::operator+
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::operator+" << std::endl;
+using namespace sealcrypt::test;
 
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
-
+TEST_F(CryptoTestFixture, Addition) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution< std::int64_t > dist(0, 1000);
@@ -25,23 +18,25 @@ auto main() -> int {
     std::int64_t b = dist(gen);
     std::int64_t expected = a + b;
 
-    auto enc_a = sealcrypt::HomomorphicInt::encrypt(a, ctx, keys);
-    auto enc_b = sealcrypt::HomomorphicInt::encrypt(b, ctx, keys);
+    auto enc_a = sealcrypt::HomomorphicInt::encrypt(a, *ctx, *keys);
+    ASSERT_TRUE(enc_a.isValid()) << "Failed to encrypt " << a;
+
+    auto enc_b = sealcrypt::HomomorphicInt::encrypt(b, *ctx, *keys);
+    ASSERT_TRUE(enc_b.isValid()) << "Failed to encrypt " << b;
+
     auto enc_sum = enc_a + enc_b;
+    ASSERT_TRUE(enc_sum.isValid()) << "Addition result is invalid";
 
-    if(!enc_sum.isValid()) {
-      std::cerr << "FAIL: addition result is invalid" << std::endl;
-      return 1;
-    }
-
-    std::int64_t result = enc_sum.decrypt(ctx, keys);
-    if(result != expected) {
-      std::cerr << "FAIL: " << a << " + " << b << " = " << result
-                << ", expected " << expected << std::endl;
-      return 1;
-    }
+    std::int64_t result = enc_sum.decrypt(*ctx, *keys);
+    EXPECT_EQ(result, expected)
+        << a << " + " << b << " = " << result << ", expected " << expected;
   }
+}
 
-  std::cout << "PASS" << std::endl;
-  return 0;
+TEST(HomomorphicIntTest, AdditionWithInvalidOperands) {
+  sealcrypt::HomomorphicInt invalid1;
+  sealcrypt::HomomorphicInt invalid2;
+
+  auto result = invalid1 + invalid2;
+  EXPECT_FALSE(result.isValid());
 }

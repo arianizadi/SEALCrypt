@@ -1,23 +1,16 @@
 // Test: HomomorphicInt::save() and load()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
 #include <cstdio>
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::save() and load()" << std::endl;
+using namespace sealcrypt::test;
 
+TEST_F(CryptoTestFixture, SaveLoad) {
   const char* path = "test_ciphertext.bin";
-
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -26,38 +19,18 @@ auto main() -> int {
   std::int64_t value = dist(gen);
 
   // Encrypt and save
-  auto enc = sealcrypt::HomomorphicInt::encrypt(value, ctx, keys);
-  if(!enc.save(path, ctx)) {
-    std::cerr << "FAIL: save() returned false" << std::endl;
-    std::cerr << "Error: " << enc.getLastError() << std::endl;
-    return 1;
-  }
+  auto enc = sealcrypt::HomomorphicInt::encrypt(value, *ctx, *keys);
+  ASSERT_TRUE(enc.save(path, *ctx)) << "Error: " << enc.getLastError();
 
   // Load into new object
   sealcrypt::HomomorphicInt loaded;
-  if(!loaded.load(path, ctx)) {
-    std::cerr << "FAIL: load() returned false" << std::endl;
-    std::cerr << "Error: " << loaded.getLastError() << std::endl;
-    remove(path);
-    return 1;
-  }
-
-  if(!loaded.isValid()) {
-    std::cerr << "FAIL: loaded ciphertext is invalid" << std::endl;
-    remove(path);
-    return 1;
-  }
+  ASSERT_TRUE(loaded.load(path, *ctx)) << "Error: " << loaded.getLastError();
+  EXPECT_TRUE(loaded.isValid());
 
   // Decrypt and verify
-  std::int64_t result = loaded.decrypt(ctx, keys);
-  if(result != value) {
-    std::cerr << "FAIL: loaded value " << result << " != original " << value
-              << std::endl;
-    remove(path);
-    return 1;
-  }
+  std::int64_t result = loaded.decrypt(*ctx, *keys);
+  EXPECT_EQ(result, value) << "Loaded value " << result << " != original "
+                           << value;
 
   remove(path);
-  std::cout << "PASS" << std::endl;
-  return 0;
 }

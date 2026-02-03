@@ -2,41 +2,17 @@
 
 #include "sealcrypt/sealcrypt.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: KeyPair::generateGaloisKeys()" << std::endl;
-
+TEST(KeyPairTest, GenerateGaloisKeys) {
   sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
   sealcrypt::KeyPair keys(ctx);
 
-  // Generate base keys first
-  if(!keys.generate()) {
-    std::cerr << "FAIL: generate() failed" << std::endl;
-    return 1;
-  }
+  ASSERT_TRUE(keys.generate());
 
-  // Should not have galois keys yet
-  if(keys.hasGaloisKeys()) {
-    std::cerr << "FAIL: hasGaloisKeys() true before generateGaloisKeys()"
-              << std::endl;
-    return 1;
-  }
+  EXPECT_FALSE(keys.hasGaloisKeys());
 
-  // Generate galois keys
-  if(!keys.generateGaloisKeys()) {
-    std::cerr << "FAIL: generateGaloisKeys() returned false" << std::endl;
-    std::cerr << "Error: " << keys.getLastError() << std::endl;
-    return 1;
-  }
+  EXPECT_TRUE(keys.generateGaloisKeys()) << "Error: " << keys.getLastError();
 
-  // Should have galois keys now
-  if(!keys.hasGaloisKeys()) {
-    std::cerr << "FAIL: hasGaloisKeys() false after generateGaloisKeys()"
-              << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS" << std::endl;
-  return 0;
+  EXPECT_TRUE(keys.hasGaloisKeys());
 }

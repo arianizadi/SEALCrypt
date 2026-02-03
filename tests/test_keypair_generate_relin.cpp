@@ -2,48 +2,24 @@
 
 #include "sealcrypt/sealcrypt.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: KeyPair::generateRelinKeys()" << std::endl;
-
+TEST(KeyPairTest, GenerateRelinKeys) {
   sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
   sealcrypt::KeyPair keys(ctx);
 
   // Should fail without generate() first
-  if(keys.generateRelinKeys()) {
-    std::cerr << "FAIL: generateRelinKeys() succeeded without generate()"
-              << std::endl;
-    return 1;
-  }
+  EXPECT_FALSE(keys.generateRelinKeys());
 
   // Generate base keys first
-  if(!keys.generate()) {
-    std::cerr << "FAIL: generate() failed" << std::endl;
-    return 1;
-  }
+  ASSERT_TRUE(keys.generate());
 
   // Should not have relin keys yet
-  if(keys.hasRelinKeys()) {
-    std::cerr << "FAIL: hasRelinKeys() true before generateRelinKeys()"
-              << std::endl;
-    return 1;
-  }
+  EXPECT_FALSE(keys.hasRelinKeys());
 
   // Generate relin keys
-  if(!keys.generateRelinKeys()) {
-    std::cerr << "FAIL: generateRelinKeys() returned false" << std::endl;
-    std::cerr << "Error: " << keys.getLastError() << std::endl;
-    return 1;
-  }
+  EXPECT_TRUE(keys.generateRelinKeys()) << "Error: " << keys.getLastError();
 
   // Should have relin keys now
-  if(!keys.hasRelinKeys()) {
-    std::cerr << "FAIL: hasRelinKeys() false after generateRelinKeys()"
-              << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS" << std::endl;
-  return 0;
+  EXPECT_TRUE(keys.hasRelinKeys());
 }

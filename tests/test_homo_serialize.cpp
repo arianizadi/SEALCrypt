@@ -1,22 +1,14 @@
 // Test: HomomorphicInt::serialize() and deserialize()
 
 #include "sealcrypt/sealcrypt.hpp"
+#include "test_fixtures.hpp"
 
-#include <iostream>
+#include <gtest/gtest.h>
 #include <random>
 
-auto main() -> int {
-  std::cout << "Test: HomomorphicInt::serialize() and deserialize()"
-            << std::endl;
+using namespace sealcrypt::test;
 
-  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
-  sealcrypt::KeyPair keys(ctx);
-
-  if(!keys.generate()) {
-    std::cerr << "FAIL: keys.generate() failed" << std::endl;
-    return 1;
-  }
-
+TEST_F(CryptoTestFixture, SerializeDeserialize) {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution< std::int64_t > dist(0, 10000);
@@ -24,35 +16,19 @@ auto main() -> int {
   std::int64_t value = dist(gen);
 
   // Encrypt and serialize
-  auto enc = sealcrypt::HomomorphicInt::encrypt(value, ctx, keys);
-  auto bytes = enc.serialize(ctx);
+  auto enc = sealcrypt::HomomorphicInt::encrypt(value, *ctx, *keys);
+  auto bytes = enc.serialize(*ctx);
 
-  if(bytes.empty()) {
-    std::cerr << "FAIL: serialize() returned empty vector" << std::endl;
-    return 1;
-  }
+  EXPECT_FALSE(bytes.empty()) << "Serialized data should not be empty";
 
   // Deserialize into new object
   sealcrypt::HomomorphicInt deserialized;
-  if(!deserialized.deserialize(bytes, ctx)) {
-    std::cerr << "FAIL: deserialize() returned false" << std::endl;
-    std::cerr << "Error: " << deserialized.getLastError() << std::endl;
-    return 1;
-  }
-
-  if(!deserialized.isValid()) {
-    std::cerr << "FAIL: deserialized ciphertext is invalid" << std::endl;
-    return 1;
-  }
+  ASSERT_TRUE(deserialized.deserialize(bytes, *ctx))
+      << "Error: " << deserialized.getLastError();
+  EXPECT_TRUE(deserialized.isValid());
 
   // Decrypt and verify
-  std::int64_t result = deserialized.decrypt(ctx, keys);
-  if(result != value) {
-    std::cerr << "FAIL: deserialized value " << result << " != original "
-              << value << std::endl;
-    return 1;
-  }
-
-  std::cout << "PASS (serialized to " << bytes.size() << " bytes)" << std::endl;
-  return 0;
+  std::int64_t result = deserialized.decrypt(*ctx, *keys);
+  EXPECT_EQ(result, value) << "Deserialized value " << result << " != original "
+                           << value;
 }

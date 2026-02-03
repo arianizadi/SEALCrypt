@@ -3,11 +3,9 @@
 #include "sealcrypt/sealcrypt.hpp"
 
 #include <cstdio>
-#include <iostream>
+#include <gtest/gtest.h>
 
-auto main() -> int {
-  std::cout << "Test: KeyPair::save() and load()" << std::endl;
-
+TEST(KeyPairTest, SaveLoad) {
   const char* pub_path = "test_pub.key";
   const char* sec_path = "test_sec.key";
 
@@ -16,46 +14,28 @@ auto main() -> int {
   // Generate and save
   {
     sealcrypt::KeyPair keys(ctx);
-    if(!keys.generate()) {
-      std::cerr << "FAIL: generate() failed" << std::endl;
-      return 1;
-    }
-
-    if(!keys.save(pub_path, sec_path)) {
-      std::cerr << "FAIL: save() returned false" << std::endl;
-      std::cerr << "Error: " << keys.getLastError() << std::endl;
-      return 1;
-    }
+    ASSERT_TRUE(keys.generate());
+    EXPECT_TRUE(keys.save(pub_path, sec_path))
+        << "Error: " << keys.getLastError();
   }
 
   // Load into new KeyPair
   {
     sealcrypt::KeyPair keys(ctx);
-
-    if(!keys.load(pub_path, sec_path)) {
-      std::cerr << "FAIL: load() returned false" << std::endl;
-      std::cerr << "Error: " << keys.getLastError() << std::endl;
-      remove(pub_path);
-      remove(sec_path);
-      return 1;
-    }
-
-    if(!keys.hasPublicKey()) {
-      std::cerr << "FAIL: hasPublicKey() false after load()" << std::endl;
-      remove(pub_path);
-      remove(sec_path);
-      return 1;
-    }
-    if(!keys.hasSecretKey()) {
-      std::cerr << "FAIL: hasSecretKey() false after load()" << std::endl;
-      remove(pub_path);
-      remove(sec_path);
-      return 1;
-    }
+    EXPECT_TRUE(keys.load(pub_path, sec_path))
+        << "Error: " << keys.getLastError();
+    EXPECT_TRUE(keys.hasPublicKey());
+    EXPECT_TRUE(keys.hasSecretKey());
   }
 
   remove(pub_path);
   remove(sec_path);
-  std::cout << "PASS" << std::endl;
-  return 0;
+}
+
+TEST(KeyPairTest, LoadNonexistentFile) {
+  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
+  sealcrypt::KeyPair keys(ctx);
+
+  EXPECT_FALSE(keys.loadPublicKey("nonexistent.key"));
+  EXPECT_FALSE(keys.loadSecretKey("nonexistent.key"));
 }
