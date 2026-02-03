@@ -1,30 +1,30 @@
 #include "sealcrypt/file_handler.hpp"
 
 #include <filesystem>
-#include <fstream>
 
 namespace sealcrypt {
+
+  // ==================== Byte Vector Operations ====================
 
   auto FileHandler::readFile(const std::string& path,
                              std::vector< std::uint8_t >& data,
                              std::string& error) -> bool {
     try {
-      std::ifstream file(path, std::ios::binary);
-      if(!file.is_open()) {
-        error = "Could not open file for reading: " + path;
+      auto file = openForReading(path, error);
+      if(!file) {
         return false;
       }
 
       // Get file size
-      file.seekg(0, std::ios::end);
-      const auto size = file.tellg();
-      file.seekg(0, std::ios::beg);
+      file->seekg(0, std::ios::end);
+      const auto size = file->tellg();
+      file->seekg(0, std::ios::beg);
 
       // Read file content
-      data.resize(size);
-      file.read(reinterpret_cast< char* >(data.data()), size);
+      data.resize(static_cast< std::size_t >(size));
+      file->read(reinterpret_cast< char* >(data.data()), size);
 
-      if(!file) {
+      if(!*file) {
         error = "Error reading file: " + path;
         return false;
       }
@@ -40,16 +40,15 @@ namespace sealcrypt {
                               const std::vector< std::uint8_t >& data,
                               std::string& error) -> bool {
     try {
-      std::ofstream file(path, std::ios::binary);
-      if(!file.is_open()) {
-        error = "Could not open file for writing: " + path;
+      auto file = openForWriting(path, error);
+      if(!file) {
         return false;
       }
 
-      file.write(reinterpret_cast< const char* >(data.data()),
-                 static_cast< std::streamsize >(data.size()));
+      file->write(reinterpret_cast< const char* >(data.data()),
+                  static_cast< std::streamsize >(data.size()));
 
-      if(!file) {
+      if(!*file) {
         error = "Error writing to file: " + path;
         return false;
       }
@@ -61,21 +60,59 @@ namespace sealcrypt {
     }
   }
 
+  // ==================== Stream Operations ====================
+
+  auto FileHandler::openForReading(const std::string& path, std::string& error)
+      -> std::unique_ptr< std::ifstream > {
+    try {
+      if(!fileExists(path)) {
+        error = "File does not exist: " + path;
+        return nullptr;
+      }
+
+      auto file = std::make_unique< std::ifstream >(path, std::ios::binary);
+      if(!file->is_open()) {
+        error = "Could not open file for reading: " + path;
+        return nullptr;
+      }
+
+      return file;
+    } catch(const std::exception& e) {
+      error = "Exception while opening file: " + std::string(e.what());
+      return nullptr;
+    }
+  }
+
+  auto FileHandler::openForWriting(const std::string& path, std::string& error)
+      -> std::unique_ptr< std::ofstream > {
+    try {
+      auto file = std::make_unique< std::ofstream >(path, std::ios::binary);
+      if(!file->is_open()) {
+        error = "Could not open file for writing: " + path;
+        return nullptr;
+      }
+
+      return file;
+    } catch(const std::exception& e) {
+      error = "Exception while opening file: " + std::string(e.what());
+      return nullptr;
+    }
+  }
+
+  // ==================== File Operations ====================
+
   auto FileHandler::readKeyFile(const std::string& path,
                                 std::vector< std::uint8_t >& key_data,
                                 std::string& error) -> bool {
-    // For key files, we'll add some basic validation
     if(!fileExists(path)) {
       error = "Key file does not exist: " + path;
       return false;
     }
 
-    bool result = readFile(path, key_data, error);
-    if(!result) {
+    if(!readFile(path, key_data, error)) {
       return false;
     }
 
-    // Add any key-specific validation here if needed
     if(key_data.empty()) {
       error = "Key file is empty: " + path;
       return false;
@@ -92,27 +129,10 @@ namespace sealcrypt {
       return false;
     }
 
-    try {
-      std::ofstream file(path, std::ios::binary);
-      if(!file.is_open()) {
-        error = "Could not open key file for writing: " + path;
-        return false;
-      }
-
-      file.write(reinterpret_cast< const char* >(key_data.data()),
-                 static_cast< std::streamsize >(key_data.size()));
-
-      if(!file) {
-        error = "Error writing to key file: " + path;
-        return false;
-      }
-
-      return true;
-    } catch(const std::exception& e) {
-      error = "Exception while writing key file: " + std::string(e.what());
-      return false;
-    }
+    return writeFile(path, key_data, error);
   }
+
+  // ==================== Utility Functions ====================
 
   auto FileHandler::getFileSize(const std::string& path) -> std::size_t {
     try {

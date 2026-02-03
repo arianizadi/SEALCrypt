@@ -1,42 +1,52 @@
 #pragma once
 
+#include "sealcrypt/context.hpp"
+#include "sealcrypt/keys.hpp"
+
 #include <memory>
-#include <seal/seal.h>
 #include <string>
 #include <vector>
 
 namespace sealcrypt {
 
+  /// Encryptor handles file encryption using homomorphic encryption.
+  /// Uses a shared CryptoContext for consistent parameters.
   class Encryptor {
   public:
-    Encryptor();
+    /// Create an Encryptor with a shared crypto context
+    /// @param ctx The crypto context (must outlive this Encryptor)
+    explicit Encryptor(const CryptoContext& ctx);
+
     ~Encryptor();
 
-    // Initialize encryption parameters
-    auto init(std::size_t poly_modulus_degree = 8192,
-              std::uint64_t plain_modulus = 1024) -> bool;
+    // Non-copyable, movable
+    Encryptor(const Encryptor&) = delete;
+    auto operator=(const Encryptor&) -> Encryptor& = delete;
+    Encryptor(Encryptor&&) noexcept;
+    auto operator=(Encryptor&&) noexcept -> Encryptor&;
 
-    // Encrypt a file using provided public key
+    /// Encrypt a file
+    /// @param input_path Path to the plaintext file
+    /// @param output_path Path for the encrypted output
+    /// @param keys KeyPair with public key available
+    /// @return true if successful
     auto encryptFile(const std::string& input_path,
                      const std::string& output_path,
-                     const std::string& public_key_path) -> bool;
+                     const KeyPair& keys) -> bool;
 
-    // Generate new key pair
-    auto generateKeys(const std::string& public_key_path,
-                      const std::string& private_key_path) -> bool;
+    /// Encrypt raw bytes
+    /// @param data The bytes to encrypt
+    /// @param keys KeyPair with public key available
+    /// @return Encrypted data as bytes, or empty on failure
+    auto encryptBytes(const std::vector< std::uint8_t >& data,
+                      const KeyPair& keys) -> std::vector< std::uint8_t >;
 
-    // Get last error message
+    /// Get last error message
     [[nodiscard]] auto getLastError() const -> std::string;
 
   private:
-    std::unique_ptr< seal::SEALContext > context_;
-    std::unique_ptr< seal::KeyGenerator > keygen_;
-    std::unique_ptr< seal::Encryptor > encryptor_;
-    std::string last_error_;
-
-    auto initializeContext(std::size_t poly_modulus_degree,
-                           std::uint64_t plain_modulus) -> bool;
-    auto preparePlaintexts(const std::vector< std::uint8_t >& data)
-        -> std::vector< seal::Plaintext >;
+    struct Impl;
+    std::unique_ptr< Impl > impl_;
   };
+
 } // namespace sealcrypt

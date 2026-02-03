@@ -1,37 +1,52 @@
 #pragma once
 
+#include "sealcrypt/context.hpp"
+#include "sealcrypt/keys.hpp"
+
 #include <memory>
-#include <seal/seal.h>
 #include <string>
 #include <vector>
 
 namespace sealcrypt {
 
+  /// Decryptor handles file decryption of homomorphically encrypted data.
+  /// Uses a shared CryptoContext for consistent parameters.
   class Decryptor {
   public:
-    Decryptor();
+    /// Create a Decryptor with a shared crypto context
+    /// @param ctx The crypto context (must outlive this Decryptor)
+    explicit Decryptor(const CryptoContext& ctx);
+
     ~Decryptor();
 
-    // Initialize decryption with parameters
-    auto init(std::size_t poly_modulus_degree = 8192,
-              std::uint64_t plain_modulus = 1024) -> bool;
+    // Non-copyable, movable
+    Decryptor(const Decryptor&) = delete;
+    auto operator=(const Decryptor&) -> Decryptor& = delete;
+    Decryptor(Decryptor&&) noexcept;
+    auto operator=(Decryptor&&) noexcept -> Decryptor&;
 
-    // Decrypt a file using provided private key
-    auto decryptFile(const std::string &input_path,
-                     const std::string &output_path,
-                     const std::string &private_key_path) -> bool;
+    /// Decrypt a file
+    /// @param input_path Path to the encrypted file
+    /// @param output_path Path for the decrypted output
+    /// @param keys KeyPair with secret key available
+    /// @return true if successful
+    auto decryptFile(const std::string& input_path,
+                     const std::string& output_path,
+                     const KeyPair& keys) -> bool;
 
-    // Get last error message
+    /// Decrypt raw bytes
+    /// @param data The encrypted bytes
+    /// @param keys KeyPair with secret key available
+    /// @return Decrypted data as bytes, or empty on failure
+    auto decryptBytes(const std::vector< std::uint8_t >& data,
+                      const KeyPair& keys) -> std::vector< std::uint8_t >;
+
+    /// Get last error message
     [[nodiscard]] auto getLastError() const -> std::string;
 
   private:
-    std::unique_ptr< seal::SEALContext > context_;
-    std::unique_ptr< seal::Decryptor > decryptor_;
-    std::string last_error_;
-
-    auto initializeContext(std::size_t poly_modulus_degree,
-                           std::uint64_t plain_modulus) -> bool;
-    auto processDecrypted(const std::vector< seal::Plaintext > &plaintexts)
-        -> std::vector< std::uint8_t >;
+    struct Impl;
+    std::unique_ptr< Impl > impl_;
   };
+
 } // namespace sealcrypt

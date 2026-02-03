@@ -1,26 +1,32 @@
-#include "sealcrypt/encrypt.hpp"
+#include "sealcrypt/sealcrypt.hpp"
 
 #include <fstream>
 #include <iostream>
 
-auto testEncryptorInitialization() -> bool {
-  sealcrypt::Encryptor encryptor;
-  if(!encryptor.init()) {
-    std::cerr << "Error: " << encryptor.getLastError() << std::endl;
+auto testContextInitialization() -> bool {
+  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
+  if(!ctx.isValid()) {
+    std::cerr << "Error: " << ctx.getLastError() << std::endl;
     return false;
   }
   return true;
 }
 
 auto testKeyGeneration() -> bool {
-  sealcrypt::Encryptor encryptor;
-  if(!encryptor.init()) {
-    std::cerr << "Error: " << encryptor.getLastError() << std::endl;
+  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
+  if(!ctx.isValid()) {
+    std::cerr << "Error: " << ctx.getLastError() << std::endl;
     return false;
   }
 
-  if(!encryptor.generateKeys("test_public.key", "test_private.key")) {
-    std::cerr << "Error: " << encryptor.getLastError() << std::endl;
+  sealcrypt::KeyPair keys(ctx);
+  if(!keys.generate()) {
+    std::cerr << "Error: " << keys.getLastError() << std::endl;
+    return false;
+  }
+
+  if(!keys.save("test_public.key", "test_private.key")) {
+    std::cerr << "Error: " << keys.getLastError() << std::endl;
     return false;
   }
 
@@ -41,19 +47,25 @@ auto testFileEncryption() -> bool {
     test_file << "This is a test message for encryption.";
   }
 
-  sealcrypt::Encryptor encryptor;
-  if(!encryptor.init()) {
-    std::cerr << "Error: " << encryptor.getLastError() << std::endl;
+  sealcrypt::CryptoContext ctx(sealcrypt::SecurityLevel::Low);
+  if(!ctx.isValid()) {
+    std::cerr << "Error: " << ctx.getLastError() << std::endl;
     return false;
   }
 
-  if(!encryptor.generateKeys("test_public.key", "test_private.key")) {
-    std::cerr << "Error: " << encryptor.getLastError() << std::endl;
+  sealcrypt::KeyPair keys(ctx);
+  if(!keys.generate()) {
+    std::cerr << "Error: " << keys.getLastError() << std::endl;
     return false;
   }
 
-  if(!encryptor.encryptFile(
-         "test_input.txt", "test_encrypted.dat", "test_public.key")) {
+  if(!keys.save("test_public.key", "test_private.key")) {
+    std::cerr << "Error: " << keys.getLastError() << std::endl;
+    return false;
+  }
+
+  sealcrypt::Encryptor encryptor(ctx);
+  if(!encryptor.encryptFile("test_input.txt", "test_encrypted.dat", keys)) {
     std::cerr << "Error: " << encryptor.getLastError() << std::endl;
     return false;
   }
@@ -75,8 +87,8 @@ auto testFileEncryption() -> bool {
 auto main() -> int {
   bool all_passed = true;
 
-  std::cout << "Testing Encryptor initialization... ";
-  if(testEncryptorInitialization()) {
+  std::cout << "Testing context initialization... ";
+  if(testContextInitialization()) {
     std::cout << "passed" << std::endl;
   } else {
     std::cout << "failed" << std::endl;

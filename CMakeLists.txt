@@ -33,6 +33,9 @@ endif()
 
 # Define source files for the library
 set(SEALCRYPT_LIB_SOURCES
+    src/context.cpp
+    src/keys.cpp
+    src/homomorphic.cpp
     src/encrypt.cpp
     src/decrypt.cpp
     src/file_handler.cpp
@@ -40,6 +43,10 @@ set(SEALCRYPT_LIB_SOURCES
 
 # Define headers
 set(SEALCRYPT_HEADERS
+    include/sealcrypt/sealcrypt.hpp
+    include/sealcrypt/context.hpp
+    include/sealcrypt/keys.hpp
+    include/sealcrypt/homomorphic.hpp
     include/sealcrypt/encrypt.hpp
     include/sealcrypt/decrypt.hpp
     include/sealcrypt/file_handler.hpp
