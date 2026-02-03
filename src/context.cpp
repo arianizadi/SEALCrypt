@@ -7,7 +7,7 @@ namespace sealcrypt {
     std::unique_ptr< seal::Evaluator > evaluator;
     std::size_t poly_modulus_degree {0};
     std::uint64_t plain_modulus {0};
-    std::string last_error;
+    std::string last_error; // TODO: not thread safe - can mutex to write?
     bool valid {false};
 
     auto initialize(std::size_t poly_deg, std::uint64_t plain_mod) -> bool {

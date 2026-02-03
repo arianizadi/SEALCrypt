@@ -6,6 +6,9 @@ namespace sealcrypt {
 
   // ==================== Byte Vector Operations ====================
 
+  // TODO: can crash if too large file, implement file streaming? but files can
+  // be too large for homomorphic bc of growth potential. Possibly just limit
+  // filesize to 1GB?
   auto FileHandler::readFile(const std::string& path,
                              std::vector< std::uint8_t >& data,
                              std::string& error) -> bool {
