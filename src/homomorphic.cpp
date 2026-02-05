@@ -127,56 +127,73 @@ namespace sealcrypt {
 
   auto HomomorphicInt::operator+(const HomomorphicInt& other) const
       -> HomomorphicInt {
-    // TODO: Implement homomorphic addition
-    // 1. Check both operands are valid and context is set
-    // 2. Use ctx->evaluator().add(this->ciphertext, other->ciphertext, result)
-    // 3. Return new HomomorphicInt with result
-    (void) other;
-    return HomomorphicInt();
+    if(!this->isValid() || !other.isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    this->impl_->ctx->evaluator().add(
+        this->ciphertext(), other.ciphertext(), result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::operator-(const HomomorphicInt& other) const
       -> HomomorphicInt {
-    // TODO: Implement homomorphic subtraction
-    // Use ctx->evaluator().sub()
-    (void) other;
-    return HomomorphicInt();
+    if(!this->isValid() || !other.isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    this->impl_->ctx->evaluator().sub(
+        this->ciphertext(), other.ciphertext(), result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::operator*(const HomomorphicInt& other) const
       -> HomomorphicInt {
-    // TODO: Implement homomorphic multiplication
-    // Use ctx->evaluator().multiply()
-    // Note: Ciphertext size increases after multiplication
-    (void) other;
-    return HomomorphicInt();
+    if(!this->isValid() || !other.isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    this->impl_->ctx->evaluator().multiply(
+        this->ciphertext(), other.ciphertext(), result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::operator-() const -> HomomorphicInt {
-    // TODO: Implement homomorphic negation
-    // Use ctx->evaluator().negate()
-    return HomomorphicInt();
+    if(!this->isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    this->impl_->ctx->evaluator().negate(this->ciphertext(), result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::operator+=(const HomomorphicInt& other)
       -> HomomorphicInt& {
-    // TODO: Implement in-place addition
-    // Hint: Can use *this = *this + other, or use add_inplace
-    (void) other;
+    if(!this->isValid() || !other.isValid()) {
+      return *this;
+    }
+    this->impl_->ctx->evaluator().add_inplace(this->impl_->ciphertext,
+                                              other.ciphertext());
     return *this;
   }
 
   auto HomomorphicInt::operator-=(const HomomorphicInt& other)
       -> HomomorphicInt& {
-    // TODO: Implement in-place subtraction
-    (void) other;
+    if(!this->isValid() || !other.isValid()) {
+      return *this;
+    }
+    this->impl_->ctx->evaluator().sub_inplace(this->impl_->ciphertext,
+                                              other.ciphertext());
     return *this;
   }
 
   auto HomomorphicInt::operator*=(const HomomorphicInt& other)
       -> HomomorphicInt& {
-    // TODO: Implement in-place multiplication
-    (void) other;
+    if(!this->isValid() || !other.isValid()) {
+      return *this;
+    }
+    this->impl_->ctx->evaluator().multiply_inplace(this->impl_->ciphertext,
+                                                   other.ciphertext());
     return *this;
   }
 
@@ -185,44 +202,49 @@ namespace sealcrypt {
   auto HomomorphicInt::addPlain(std::int64_t value,
                                 const CryptoContext& ctx) const
       -> HomomorphicInt {
-    // TODO: Add plaintext to ciphertext
-    // 1. Create seal::Plaintext from toHexString(value)
-    // 2. Use ctx.evaluator().add_plain(ciphertext, plaintext, result)
-    // More efficient than encrypting value first
-    (void) value;
-    (void) ctx;
-    return HomomorphicInt();
+    if(!ctx.isValid() || !this->isValid()) {
+      return {};
+    }
+    seal::Plaintext plaintext(toHexString(value));
+    seal::Ciphertext result;
+    ctx.evaluator().add_plain(ciphertext(), plaintext, result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::subPlain(std::int64_t value,
                                 const CryptoContext& ctx) const
       -> HomomorphicInt {
-    // TODO: Subtract plaintext from ciphertext
-    // Use ctx.evaluator().sub_plain()
-    (void) value;
-    (void) ctx;
-    return HomomorphicInt();
+    if(!ctx.isValid() || !this->isValid()) {
+      return {};
+    }
+    seal::Plaintext plaintext(toHexString(value));
+    seal::Ciphertext result;
+    ctx.evaluator().sub_plain(ciphertext(), plaintext, result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::mulPlain(std::int64_t value,
                                 const CryptoContext& ctx) const
       -> HomomorphicInt {
-    // TODO: Multiply ciphertext by plaintext
-    // Use ctx.evaluator().multiply_plain()
-    (void) value;
-    (void) ctx;
-    return HomomorphicInt();
+    if(!ctx.isValid() || !this->isValid()) {
+      return {};
+    }
+    seal::Plaintext plaintext(toHexString(value));
+    seal::Ciphertext result;
+    ctx.evaluator().multiply_plain(ciphertext(), plaintext, result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   // ==================== Advanced Operations ====================
 
   auto HomomorphicInt::square(const CryptoContext& ctx) const
       -> HomomorphicInt {
-    // TODO: Square the ciphertext
-    // Use ctx.evaluator().square()
-    // More efficient than multiply(this, this)
-    (void) ctx;
-    return HomomorphicInt();
+    if(!ctx.isValid() || !this->isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    this->impl_->ctx->evaluator().square(ciphertext(), result);
+    return HomomorphicInt(result, this->impl_->ctx);
   }
 
   auto HomomorphicInt::power(std::uint64_t exponent,
@@ -278,11 +300,10 @@ namespace sealcrypt {
   }
 
   auto HomomorphicInt::size() const -> std::size_t {
-    // TODO: Return ciphertext size (number of polynomials)
-    // Fresh ciphertext has size 2
-    // After multiplication (before relinearization) has size 3
-    // Return impl_->ciphertext.size()
-    return 0;
+    if(!this->isValid()) {
+      return 0;
+    }
+    return impl_->ciphertext.size();
   }
 
   // transparent encryption means it can be decrypted without secret key
