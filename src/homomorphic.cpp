@@ -250,36 +250,40 @@ namespace sealcrypt {
   auto HomomorphicInt::power(std::uint64_t exponent,
                              const CryptoContext& ctx,
                              const KeyPair& keys) const -> HomomorphicInt {
-    // TODO: Raise ciphertext to a power
-    // 1. Check keys.hasRelinKeys()
-    // 2. Use ctx.evaluator().exponentiate(ciphertext, exponent,
-    // keys.relinKeys(), result) Requires relinearization keys to manage
-    // ciphertext size
-    (void) exponent;
-    (void) ctx;
-    (void) keys;
-    return HomomorphicInt();
+    if(!ctx.isValid() || !this->isValid()) {
+      return {};
+    }
+    if(!keys.hasRelinKeys()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    ctx.evaluator().exponentiate(
+        this->ciphertext(), exponent, keys.relinKeys(), result);
+    return HomomorphicInt(result, &ctx);
   }
 
   auto HomomorphicInt::relinearize(const CryptoContext& ctx,
                                    const KeyPair& keys) const
       -> HomomorphicInt {
-    // TODO: Relinearize ciphertext to reduce size
-    // 1. Check keys.hasRelinKeys()
-    // 2. Use ctx.evaluator().relinearize(ciphertext, keys.relinKeys(), result)
-    // Should be called after multiplication to reduce size from 3 to 2
-    (void) ctx;
-    (void) keys;
-    return HomomorphicInt();
+    if(!this->isValid() || !ctx.isValid()) {
+      return {};
+    }
+    if(!keys.hasRelinKeys()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    ctx.evaluator().relinearize(ciphertext(), keys.relinKeys(), result);
+    return HomomorphicInt(result, &ctx);
   }
 
   auto HomomorphicInt::modSwitchToNext(const CryptoContext& ctx) const
       -> HomomorphicInt {
-    // TODO: Switch to next modulus level
-    // Use ctx.evaluator().mod_switch_to_next(ciphertext, result)
-    // Reduces noise budget consumption but also reduces precision
-    (void) ctx;
-    return HomomorphicInt();
+    if(!this->isValid() || !ctx.isValid()) {
+      return {};
+    }
+    seal::Ciphertext result;
+    ctx.evaluator().mod_switch_to_next(this->ciphertext(), result);
+    return HomomorphicInt(result, &ctx);
   }
 
   // ==================== Utility / Info ====================
@@ -290,13 +294,11 @@ namespace sealcrypt {
 
   auto HomomorphicInt::noiseBudget(const CryptoContext& ctx,
                                    const KeyPair& keys) const -> int {
-    // TODO: Get remaining noise budget
-    // 1. Create seal::Decryptor
-    // 2. Return decryptor.invariant_noise_budget(ciphertext)
-    // When noise budget reaches 0, decryption will fail
-    (void) ctx;
-    (void) keys;
-    return -1;
+    if(!this->isValid() || !ctx.isValid() || !keys.hasSecretKey()) {
+      return {};
+    }
+    seal::Decryptor decryptor(ctx.sealContext(), keys.secretKey());
+    return decryptor.invariant_noise_budget(ciphertext());
   }
 
   auto HomomorphicInt::size() const -> std::size_t {
@@ -319,45 +321,58 @@ namespace sealcrypt {
 
   auto HomomorphicInt::save(const std::string& path,
                             const CryptoContext& ctx) const -> bool {
-    // TODO: Save ciphertext to file
-    // 1. Check impl_->valid
-    // 2. Use FileHandler::openForWriting()
-    // 3. Call impl_->ciphertext.save(*file)
-    (void) path;
-    (void) ctx;
-    return false;
+    (void) ctx; // keep ctx arg so api is symmetric for file loads / saves, less
+                // confusing
+    if(!this->isValid()) {
+      return false;
+    }
+    auto fstream = FileHandler::openForWriting(path, this->impl_->last_error);
+    if(!fstream) {
+      return false;
+    }
+    this->impl_->ciphertext.save(*fstream);
+    return true;
   }
 
   auto HomomorphicInt::load(const std::string& path, const CryptoContext& ctx)
       -> bool {
-    // TODO: Load ciphertext from file
-    // 1. Use FileHandler::openForReading()
-    // 2. Call impl_->ciphertext.load(ctx.sealContext(), *file)
-    // 3. Set impl_->ctx and impl_->valid
-    (void) path;
-    (void) ctx;
-    return false;
+    if(!ctx.isValid()) {
+      return false;
+    }
+    auto fstream = FileHandler::openForReading(path, this->impl_->last_error);
+    if(!fstream) {
+      return false;
+    }
+    impl_->ciphertext.load(ctx.sealContext(), *fstream);
+    impl_->ctx = &ctx;
+    impl_->valid = true;
+    return true;
   }
 
   auto HomomorphicInt::serialize(const CryptoContext& ctx) const
       -> std::vector< std::uint8_t > {
-    // TODO: Serialize ciphertext to bytes
-    // 1. Create std::ostringstream
-    // 2. Call impl_->ciphertext.save(stream)
-    // 3. Convert stream to vector<uint8_t>
-    (void) ctx;
-    return {};
+    (void)
+        ctx; // keep ctx for deserliaze, i want the args to match for api sake
+    if(!this->isValid()) {
+      return {};
+    }
+    std::ostringstream stream(std::ios::binary);
+    impl_->ciphertext.save(stream);
+    auto str = stream.str();
+    return {str.begin(), str.end()};
   }
 
   auto HomomorphicInt::deserialize(const std::vector< std::uint8_t >& data,
                                    const CryptoContext& ctx) -> bool {
-    // TODO: Deserialize ciphertext from bytes
-    // 1. Create std::istringstream from data
-    // 2. Call impl_->ciphertext.load(ctx.sealContext(), stream)
-    // 3. Set impl_->ctx and impl_->valid
-    (void) data;
-    (void) ctx;
-    return false;
+    if(!ctx.isValid() || data.empty()) {
+      return false;
+    }
+    std::string str(data.begin(), data.end());
+    std::istringstream stream(str, std::ios::binary);
+    impl_->ciphertext.load(ctx.sealContext(), stream);
+    impl_->ctx = &ctx;
+    impl_->valid = true;
+    return true;
   }
 
   // ==================== Advanced Access ====================

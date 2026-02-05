@@ -9,6 +9,15 @@
 using namespace sealcrypt::test;
 
 TEST_F(CryptoTestFixture, Power) {
+  // exponentials need more noise budget, or lower bits can decay and become
+  // wrong, the solution to fix this test is use medium instead of low security.
+  // when multiplying the noise multiplies, also since we run relinearization
+  // the noise increases again.
+  ctx = std::make_unique< sealcrypt::CryptoContext >(
+      sealcrypt::SecurityLevel::Medium);
+  ASSERT_TRUE(ctx->isValid());
+  keys = std::make_unique< sealcrypt::KeyPair >(*ctx);
+  ASSERT_TRUE(keys->generate());
   ASSERT_TRUE(keys->generateRelinKeys());
 
   std::random_device rd;
